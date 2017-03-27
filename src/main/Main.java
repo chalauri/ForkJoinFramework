@@ -1,11 +1,15 @@
 package main;
 
+import main.canceling_task.ArrayGenerator;
+import main.canceling_task.SearchNumberTask;
+import main.canceling_task.TaskManager;
 import main.creating_fork_join_pool.Product;
 import main.creating_fork_join_pool.ProductListGenerator;
 import main.creating_fork_join_pool.Task;
 import main.joining_results_of_task.Document;
 import main.joining_results_of_task.DocumentTask;
 import main.running_tasks_asynchronously.FolderProcessor;
+import main.throwing_exceptions_in_task.ExceptionTask;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -20,7 +24,50 @@ public class Main {
     public static void main(String[] args) {
         //creatingForkJoinPoolExample();
         //joiningResultsOfTaskExample();
-        runningTasksAsynchronouslyExample();
+        //runningTasksAsynchronouslyExample();
+        //throwingExceptionInTaskExample();
+        cancelingTaskExample();
+    }
+
+    private static void cancelingTaskExample() {
+        ArrayGenerator generator = new ArrayGenerator();
+        int array[] = generator.generateArray(1000);
+
+        TaskManager manager = new TaskManager();
+        ForkJoinPool pool = new ForkJoinPool();
+        SearchNumberTask task = new SearchNumberTask(array, 0, 1000, 5, manager);
+        pool.execute(task);
+        pool.shutdown();
+
+
+        try {
+            pool.awaitTermination(1, TimeUnit.DAYS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.printf("Main: The program has finished\n");
+    }
+
+    private static void throwingExceptionInTaskExample() {
+        int array[] = new int[100];
+        ExceptionTask task = new ExceptionTask(array, 0, 100);
+        ForkJoinPool pool = new ForkJoinPool();
+
+        pool.execute(task);
+        pool.shutdown();
+
+        try {
+            pool.awaitTermination(1, TimeUnit.DAYS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        if (task.isCompletedAbnormally()) {
+            System.out.printf("Main: An exception has ocurred\n");
+            System.out.printf("Main: %s\n", task.getException());
+        }
+        System.out.printf("Main: Result: %d", task.join());
     }
 
     private static void runningTasksAsynchronouslyExample() {
