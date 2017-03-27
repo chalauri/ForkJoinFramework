@@ -5,6 +5,7 @@ import main.creating_fork_join_pool.ProductListGenerator;
 import main.creating_fork_join_pool.Task;
 import main.joining_results_of_task.Document;
 import main.joining_results_of_task.DocumentTask;
+import main.running_tasks_asynchronously.FolderProcessor;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -18,7 +19,53 @@ public class Main {
 
     public static void main(String[] args) {
         //creatingForkJoinPoolExample();
-        joiningResultsOfTaskExample();
+        //joiningResultsOfTaskExample();
+        runningTasksAsynchronouslyExample();
+    }
+
+    private static void runningTasksAsynchronouslyExample() {
+        ForkJoinPool pool = new ForkJoinPool();
+
+        FolderProcessor system = new FolderProcessor("C:\\Windows",
+                "log");
+        FolderProcessor apps = new
+                FolderProcessor("C:\\Program Files", "log");
+        FolderProcessor studying = new FolderProcessor("C:\\dev\\studying", "java");
+
+        pool.execute(system);
+        pool.execute(apps);
+        pool.execute(studying);
+
+
+        do {
+            System.out.printf("******************************************\n");
+            System.out.printf("Main: Parallelism: %d\n", pool.
+                    getParallelism());
+            System.out.printf("Main: Active Threads: %d\n", pool.
+                    getActiveThreadCount());
+            System.out.printf("Main: Task Count: %d\n", pool.
+                    getQueuedTaskCount());
+            System.out.printf("Main: Steal Count: %d\n", pool.
+                    getStealCount());
+            System.out.printf("******************************************\n");
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } while ((!system.isDone()) || (!apps.isDone()) || (!studying.
+                isDone()));
+
+        pool.shutdown();
+
+        List<String> results;
+        results = system.join();
+        System.out.printf("System: %d files found.\n", results.size());
+        results = apps.join();
+        System.out.printf("Apps: %d files found.\n", results.size());
+        results = studying.join();
+        System.out.printf("Documents: %d files found.\n", results.
+                size());
     }
 
 
